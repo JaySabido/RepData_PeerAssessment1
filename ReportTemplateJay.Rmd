@@ -1,0 +1,69 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+## Introduction
+- what is the problem
+- motivation
+- lead with the question
+
+
+## Methods / Approach
+- collected data from <source url>
+- should tell a story, step-by-step instructions for analysis
+- order according to the story and not necessarily chronologically
+- explain mapping from RAW DATA to PROCESSED DATA
+- processed data should be tidy
+- include figures
+- it should not include every analysis you performed
+- explored relationships, how
+* statistics used and why
+- what logistic model used on training set, how, by cross validation?
+- applied to test, xx% test set accuracy
+
+
+
+## Results
+- interpret the results
+- use figures
+- include measures of uncertainty
+
+
+
+## Challenge the Results
+- why only so and so xx% accuracy
+- recommendations
+- question the approach, for example, why logistic regression? Challenge it
+
+
+
+## Conclusions
+- including potential problems
+
+
+
+## References
+- should be included for statistical methods
+
+
+
+## Loading and preprocessing the data
+
+
+
+## What is mean total number of steps taken per day?
+
+
+
+## What is the average daily activity pattern?
+
+
+
+## Imputing missing values
+
+
+
+## Are there differences in activity patterns between weekdays and weekends?

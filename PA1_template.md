@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 Author: Jay Sabido
 Date: July 3, 2017
 
@@ -62,14 +57,21 @@ Pre-processing involves:
 * adding a weekdays variable
 * determining if the weekday falls on a weekend or not
 
-```{r preprocess, echo=TRUE}
 
+```r
 # load the data
 unzip("activity.zip")     # file already exists in the repository. Just need to unzip it
 # read the csv file
 activity <- read.csv("activity.csv", header = TRUE, na.strings = "", stringsAsFactors = FALSE)     
 # Pre=process the data
 activity$steps <- as.numeric(activity$steps)     # convert to numeric
+```
+
+```
+## Warning: NAs introduced by coercion
+```
+
+```r
 activity$date <- as.Date(activity$date)     # convert to date
 activity$wday <- weekdays(activity$date)     # get the weekday
 
@@ -83,7 +85,8 @@ activity$wend <- grepl("^S", activity$wday)
 
 1. Calculate the total number of steps taken per day
 
-```{r stepsperday, echo=TRUE}
+
+```r
 library("plyr")
 actStatsDate <- ddply(activity, .(date), summarise, TotalSteps = sum(steps, na.rm = TRUE))     # get the steps per day
 ```
@@ -91,7 +94,8 @@ actStatsDate <- ddply(activity, .(date), summarise, TotalSteps = sum(steps, na.r
                     
 2. Make a histogram of the total number of steps taken each day
 
-```{r histogramorig, echo=TRUE}
+
+```r
 library("ggplot2")
 g <- ggplot(actStatsDate, aes(TotalSteps))
 g1 <- g + geom_histogram(color = "black", fill = "blue", binwidth = 1000)
@@ -101,6 +105,8 @@ g3 <- g2 + scale_y_continuous(breaks=seq(0,10,2)) + scale_x_continuous(breaks = 
 print(g3)
 ```
 
+![](PA1_template_files/figure-html/histogramorig-1.png)<!-- -->
+
 I used [this reference](http://www.sthda.com/english/wiki/ggplot2-axis-ticks-a-guide-to-customize-tick-marks-and-labels) to customize the tick marks and labels in ggplot2.
 
 Note that the plot shows 10 out of the 61 days with 1,000 steps or less. 
@@ -108,13 +114,14 @@ Note that the plot shows 10 out of the 61 days with 1,000 steps or less.
 
 3. Calculate and report the mean and median of the total number of steps taken per day
 
-```{r stats1, echo=TRUE}
+
+```r
 MeanStepsPerDay <- round(mean(actStatsDate$TotalSteps, na.rm = TRUE), digits = 0)
 MedianStepsPerDay <- round(median(actStatsDate$TotalSteps, na.rm = TRUE), digits = 0)
 ```
 
-The mean of the total number of steps taken per day is `r MeanStepsPerDay`, 
-while the median is `r MedianStepsPerDay`.
+The mean of the total number of steps taken per day is 9354, 
+while the median is 1.0395\times 10^{4}.
 
 
 
@@ -124,7 +131,8 @@ while the median is `r MedianStepsPerDay`.
 
 First, I need to calculate the mean for each interval across all days. Then, I will use ggplot to plot the time series plot.
 
-```{r interval1, echo=TRUE}
+
+```r
 actStatsInt <- ddply(activity, .(interval), summarise, IntervalMean = mean(steps, na.rm = TRUE))
 
 # Plot using ggplot2
@@ -137,6 +145,8 @@ gt3 <- gt2 + labs(title = "Time Series Plot of the Average Number of Steps Taken
 print(gt3)
 ```
 
+![](PA1_template_files/figure-html/interval1-1.png)<!-- -->
+
 This time series is very interesting. Prior to 5 am, there is hardly no activity. But once the day starts at around 5 am, the number of steps increases, peaking at around 8:30 am. During the day, from 9:00 am to 6:30 pm, the person is a bit active. But the person's activity dies down in the evening.
 
 
@@ -144,13 +154,41 @@ This time series is very interesting. Prior to 5 am, there is hardly no activity
 
 To answer this, I need to get the row with the maximum average number of steps.
 
-```{r maxinterval, echo=TRUE}
+
+```r
 library("dplyr")
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:plyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 MaxInterval <- filter(actStatsInt, IntervalMean == max(IntervalMean))
 ```
 
-The `r MaxInterval$interval` time interval contains the maximum number of steps.
-The maximum number of steps is `r round(MaxInterval$IntervalMean, digits = 0)`.
+The 835 time interval contains the maximum number of steps.
+The maximum number of steps is 206.
 
 
 
@@ -158,11 +196,17 @@ The maximum number of steps is `r round(MaxInterval$IntervalMean, digits = 0)`.
 
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
 
-```{r missingvalues, echo=TRUE}
+
+```r
 colSums(is.na(activity))
 ```
 
-There are `r colSums(is.na(activity))[1]` rows with NA's.
+```
+##    steps     date interval     wday     wend 
+##     2304        0        0        0        0
+```
+
+There are 2304 rows with NA's.
 
 
 2. Devise a strategy for filling in all of the missing values in the dataset. 
@@ -173,7 +217,8 @@ My chosen strategy for filling in all of the missing values in the dataset:
 I decided to use the mean for that 5-minute interval, for the 2-month period. 
 This is a better representation than the mean for that day in my opinion since the steps vary per time of day. Since the means per 5-minute time interval have already been calculated, I just have to integrate these via the plyr::join function.
 
-```{r strategy, echo=TRUE}
+
+```r
 activity <- join(activity, actStatsInt, by = "interval")  
 for (i in 1:length(activity$steps)) {
   if (is.na(activity$steps[i])) {activity$steps[i] <- activity$IntervalMean[i]}
@@ -183,7 +228,8 @@ for (i in 1:length(activity$steps)) {
 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r newdataset, echo=TRUE}
+
+```r
 NewActivity <- select(activity, steps:interval)
 ```
 
@@ -193,7 +239,8 @@ NewActivity <- select(activity, steps:interval)
 
 4.1 Histrogram
 
-```{r histogramnew, echo=TRUE}
+
+```r
 NewActStatsDate <- ddply(NewActivity, .(date), summarise, TotalSteps = sum(steps, na.rm = TRUE))
 
 g <- ggplot(NewActStatsDate, aes(TotalSteps))
@@ -204,18 +251,21 @@ g3 <- g2 + scale_y_continuous(breaks=seq(0,16,2)) + scale_x_continuous(breaks = 
 print(g3)
 ```
 
+![](PA1_template_files/figure-html/histogramnew-1.png)<!-- -->
+
 About 15 out of the 61 days, the person has 11,000 to 12,000 steps; 9 days between 10,000 to 11,000 steps.
 
 
 4.2. Calculate and report the **mean** and **median** total number of steps taken per day. 
 
-```{r stats2, echo=TRUE}
+
+```r
 NewMeanStepsPerDay <- round(mean(NewActStatsDate$TotalSteps, na.rm = TRUE), digits = 0)
 NewMedianStepsPerDay <- round(median(NewActStatsDate$TotalSteps, na.rm = TRUE), digits = 0)
 ```
 
-The mean of the total number of steps taken per day is `r NewMeanStepsPerDay`, 
-while the median is `r NewMedianStepsPerDay`.
+The mean of the total number of steps taken per day is 1.0766\times 10^{4}, 
+while the median is 1.0766\times 10^{4}.
 
 
 4.3. Do these values differ from the estimates from the first part of the assignment? 
@@ -235,7 +285,8 @@ For this part the `weekdays()` function may be of some help here. Use the datase
 
 1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
-```{r weekend, echo=TRUE}
+
+```r
 NewActivity$wday <- weekdays(NewActivity$date)     # get the weekday
 NewActivity$NoWork <- as.factor(grepl("^S", NewActivity$wday))
 levels(NewActivity$NoWork) <- c("weekday", "weekend")
@@ -244,7 +295,8 @@ levels(NewActivity$NoWork) <- c("weekday", "weekend")
 
 2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
-```{r panelplot, echo=TRUE, fig.height=10}
+
+```r
 # separate the data into two data frames, one for weekdays, the other for weekends
 WeekdayData <- subset(NewActivity, NoWork == "weekday")
 WeekendData <- subset(NewActivity, NoWork == "weekend")
@@ -273,8 +325,24 @@ ge3 <- ge2 + labs(title = "Time Series Plot of the Average Number of Steps\n Tak
 
 # Generate the panel plot using the gridExtra package
 library(gridExtra)
+```
+
+```
+## 
+## Attaching package: 'gridExtra'
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     combine
+```
+
+```r
 grid.arrange(gd3, ge3, nrow = 2, ncol = 1)
 ```
+
+![](PA1_template_files/figure-html/panelplot-1.png)<!-- -->
 
 Yes, there are differences in activity patterns between weekdays and weekends. Although the activity of the person picks up later during the weekends (sleeping in), the person remains more active during the rest of the day, as compared to during weekedays. And the person stays active until later during the day, including the night hours.
 
@@ -282,7 +350,8 @@ Yes, there are differences in activity patterns between weekdays and weekends. A
 
 Let's compare the average number of steps per weekday.
 
-```{r perday}
+
+```r
 NewActStatsDate1 <- ddply(NewActivity, .(date), summarise, TotalSteps = sum(steps, na.rm = TRUE))
 NewActStatsDate1$wday <- weekdays(NewActStatsDate1$date) 
 NewActStatsPerDay <- ddply(NewActStatsDate1, .(wday), summarise, MeanStepsPerDay = mean(TotalSteps, na.rm = TRUE))
@@ -290,6 +359,17 @@ NewActStatsPerDay$wday <- factor(NewActStatsPerDay$wday, levels= c("Sunday", "Mo
                                          "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
 NewActStatsPerDay <- arrange(NewActStatsPerDay, wday)
 NewActStatsPerDay
+```
+
+```
+##        wday MeanStepsPerDay
+## 1    Sunday       12088.774
+## 2    Monday       10150.709
+## 3   Tuesday        8949.556
+## 4 Wednesday       11676.910
+## 5  Thursday        8496.465
+## 6    Friday       12005.597
+## 7  Saturday       12314.274
 ```
 
 Note that there are most steps taken during Saturday and Sunday; i.e., during the weekends.
